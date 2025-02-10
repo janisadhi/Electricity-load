@@ -15,7 +15,7 @@
         }
 
         body {
-            background:whitesmoke;
+            background: whitesmoke;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -106,6 +106,7 @@
             color: red;
             font-size: 14px;
             margin-bottom: 10px;
+            text-align: left;
         }
     </style>
 </head>
@@ -115,7 +116,14 @@
 
         {% if form.errors %}
             <div class="error-message">
-                Please correct the errors below.
+                <strong>Please correct the errors below:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
             </div>
         {% endif %}
 
@@ -124,17 +132,17 @@
 
             <div class="input-group">
                 <label for="id_username">Username</label>
-                {{ form.username }}
+                <input type="text" id="id_username" name="username" class="input-field" placeholder="Enter your username" required>
             </div>
 
             <div class="input-group">
                 <label for="id_password1">Password</label>
-                {{ form.password1 }}
+                <input type="password" id="id_password1" name="password1" class="input-field" placeholder="Enter your password" required>
             </div>
 
             <div class="input-group">
                 <label for="id_password2">Confirm Password</label>
-                {{ form.password2 }}
+                <input type="password" id="id_password2" name="password2" class="input-field" placeholder="Confirm your password" required>
             </div>
 
             <button type="submit" class="register-btn">Register</button>
