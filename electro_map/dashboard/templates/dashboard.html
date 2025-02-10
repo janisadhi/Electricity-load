@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElectroMap - Power Usage</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        #navbar{
+            background-color: #1e3c72;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <nav class="bg-blue-600 w-full py-4 shadow-md flex justify-between px-6 items-center fixed top-0 z-50" id="navbar">
+        <a href="/" class="text-white text-xl font-bold">ElectroMap</a>
+        <ul class="flex space-x-6">
+            <li><a href="/" class="text-white hover:text-yellow-300">Home</a></li>
+            <li><a href="/dist" class="text-white hover:text-yellow-300">Distribution Log</a></li>
+            <li><a href="/dashboard" class="text-white hover:text-yellow-300">Dashboard</a></li>
+            <!-- <li><a href="/login" class="text-white hover:text-yellow-300">Login</a></li> -->
+
+
+
+        </ul>
+    </nav>
+
+    <div class="mt-20 w-full max-w-6xl">
+        <h1 class="text-3xl font-bold text-gray-900 text-center mb-6">Power Usage by Substations</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Overall Power Usage</h3>
+                <p id="overallUsage" class="text-2xl font-bold text-gray-900 mt-2">Loading...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Average Power Usage</h3>
+                <p id="averageUsage" class="text-2xl font-bold text-gray-900 mt-2">Loading...</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h3 class="text-lg font-semibold text-gray-700">Substations Breakdown</h3>
+                <canvas id="usageChart" class="mt-4"></canvas>
+            </div>
+        </div>
+        <div id="map" class="w-full h-96 rounded-lg shadow-md"></div>
+    </div>
+
+    <script>
+        const map = L.map('map', {
+            center: [28.3949, 84.1240],
+            zoom: 7,
+            dragging: false,
+            zoomControl: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        function getColor(allocated, current) {
+            const usage = allocated > 0 ? (current / allocated) * 100 : 0;
+            return usage < 90 ? '#4CAF50' : usage < 100 ? '#FFEB3B' : '#F44336';
+        }
+
+        fetch('http://127.0.0.1:5000/power-data')
+            .then(response => response.json())
+            .then(powerData => {
+                let overallUsage = 0, totalSubstations = 0, substationNames = [], substationUsage = [];
+
+                fetch('/static/dash/nepal-states.json')
+                    .then(response => response.json())
+                    .then(substationsGeoJSON => {
+                        L.geoJSON(substationsGeoJSON, {
+                            style: function(feature) {
+                                const name = feature.properties.name;
+                                const allocated = powerData[name]?.allocated || 0;
+                                const current = powerData[name]?.current || 0;
+                                overallUsage += current;
+                                totalSubstations++;
+                                substationNames.push(name);
+                                substationUsage.push(current);
+                                return { fillColor: getColor(allocated, current), weight: 2, color: '#fff', fillOpacity: 0.7 };
+                            },
+                            onEachFeature: function(feature, layer) {
+                                const name = feature.properties.name;
+                                const allocated = powerData[name]?.allocated || 0;
+                                const current = powerData[name]?.current || 0;
+                                layer.bindPopup(`<b>${name}</b><br>Allocated: ${allocated} MW<br>Current: ${current} MW`);
+                            }
+                        }).addTo(map);
+
+                        document.getElementById('overallUsage').textContent = `${overallUsage} MW`;
+                        document.getElementById('averageUsage').textContent = `${(overallUsage / totalSubstations).toFixed(2)} MW`;
+
+                        new Chart(document.getElementById('usageChart'), {
+                            type: 'bar',
+                            data: {
+                                labels: substationNames,
+                                datasets: [{
+                                    label: 'Power Usage (MW)',
+                                    data: substationUsage,
+                                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                                    borderColor: 'rgba(0, 123, 255, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { backgroundColor: '#333', titleColor: '#fff', bodyColor: '#fff' }
+                                },
+                                scales: {
+                                    x: { ticks: { maxRotation: 90, minRotation: 45 } },
+                                    y: { beginAtZero: true, grid: { color: '#ddd' } }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error loading GeoJSON:', error));
+            })
+            .catch(error => console.error('Error fetching power data:', error));
+    </script>
+</body>
+</html>

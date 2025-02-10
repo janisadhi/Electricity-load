@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: whitesmoke;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #444;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s ease-in-out;
+        }
+
+        .input-field:focus {
+            border-color:#1e3c72;
+            outline: none;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 12px;
+            background:#1e3c72;
+            border: none;
+            color: white;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .register-btn:hover {
+            background:#1e3c72;
+        }
+
+        .login-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color:#1e3c72;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Create an Account</h2>
+
+        {% if form.errors %}
+            <div class="error-message">
+                <strong>Please correct the errors below:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form action="{% url 'signup' %}" method="post">
+            {% csrf_token %}
+
+            <div class="input-group">
+                <label for="id_username">Username</label>
+                <input type="text" id="id_username" name="username" class="input-field" placeholder="Enter your username" required>
+            </div>
+
+            <div class="input-group">
+                <label for="id_password1">Password</label>
+                <input type="password" id="id_password1" name="password1" class="input-field" placeholder="Enter your password" required>
+            </div>
+
+            <div class="input-group">
+                <label for="id_password2">Confirm Password</label>
+                <input type="password" id="id_password2" name="password2" class="input-field" placeholder="Confirm your password" required>
+            </div>
+
+            <button type="submit" class="register-btn">Register</button>
+        </form>
+
+        <a href="{% url 'login' %}" class="login-link">Already have an account? Login</a>
+    </div>
+</body>
+</html>
